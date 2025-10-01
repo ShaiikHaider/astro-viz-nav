@@ -2,38 +2,45 @@ import { useEffect, useState, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, Telescope, Target, Rocket } from 'lucide-react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { Stars, OrbitControls } from '@react-three/drei';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
-// Simple 3D Asteroid component
-const Asteroid3D = ({ scale = 1, position = [0, 0, 0] }) => {
+// Simple 3D Asteroid component with scroll-based scaling
+const Asteroid3D = ({ scrollProgress }) => {
   const meshRef = useRef();
+  const groupRef = useRef();
   
-  useEffect(() => {
+  useFrame((state, delta) => {
     if (meshRef.current) {
-      // Slow rotation
-      const animate = () => {
-        meshRef.current.rotation.x += 0.001;
-        meshRef.current.rotation.y += 0.002;
-      };
-      const interval = setInterval(animate, 16);
-      return () => clearInterval(interval);
+      // Continuous rotation
+      meshRef.current.rotation.x += delta * 0.1;
+      meshRef.current.rotation.y += delta * 0.2;
     }
-  }, []);
+    
+    if (groupRef.current && scrollProgress !== undefined) {
+      // Scale based on scroll (0.2 to 2.0)
+      const scale = 0.2 + scrollProgress * 1.8;
+      groupRef.current.scale.setScalar(scale);
+    }
+  });
 
   return (
-    <mesh ref={meshRef} position={position} scale={scale}>
-      <icosahedronGeometry args={[1, 1]} />
-      <meshStandardMaterial color="#888" roughness={0.8} metalness={0.2} />
-    </mesh>
+    <group ref={groupRef}>
+      <mesh ref={meshRef} position={[0, 0, 0]}>
+        <icosahedronGeometry args={[1, 1]} />
+        <meshStandardMaterial color="#888" roughness={0.8} metalness={0.2} />
+      </mesh>
+    </group>
   );
 };
 
 const Home = () => {
   const navigate = useNavigate();
   const containerRef = useRef(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"]
@@ -45,7 +52,13 @@ const Home = () => {
   const scene3Opacity = useTransform(scrollYProgress, [0.4, 0.6, 0.7], [0, 1, 0]);
   const scene4Opacity = useTransform(scrollYProgress, [0.65, 0.85], [0, 1]);
 
-  const asteroidScale = useTransform(scrollYProgress, [0, 0.3], [0.2, 2]);
+  // Convert scroll progress to plain number for Three.js
+  useEffect(() => {
+    const unsubscribe = scrollYProgress.onChange(v => {
+      setScrollProgress(Math.min(v / 0.3, 1)); // 0 to 1 for first 30% of scroll
+    });
+    return unsubscribe;
+  }, [scrollYProgress]);
 
   return (
     <>
@@ -218,9 +231,7 @@ const Home = () => {
               <ambientLight intensity={0.3} />
               <pointLight position={[10, 10, 10]} intensity={1} />
               <Stars radius={300} depth={50} count={5000} factor={4} fade speed={1} />
-              <motion.group scale={asteroidScale}>
-                <Asteroid3D />
-              </motion.group>
+              <Asteroid3D scrollProgress={scrollProgress} />
               <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.5} />
             </Canvas>
           </div>
