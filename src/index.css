@@ -2,65 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
-    /* Space-themed dark design system */
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-
-    --card: 240 10% 8%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 240 10% 6%;
-    --popover-foreground: 0 0% 98%;
-
-    /* Cosmic cyan primary */
-    --primary: 189 94% 43%;
-    --primary-foreground: 240 10% 3.9%;
-    --primary-glow: 189 94% 63%;
-
-    /* Deep space secondary */
-    --secondary: 258 90% 66%;
-    --secondary-foreground: 0 0% 98%;
-    --secondary-glow: 258 90% 76%;
-
-    /* Nebula accent */
-    --accent: 322 90% 60%;
-    --accent-foreground: 0 0% 98%;
-    --accent-glow: 322 90% 70%;
-
-    --muted: 240 5% 15%;
-    --muted-foreground: 240 5% 65%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 240 6% 20%;
-    --input: 240 6% 20%;
-    --ring: 189 94% 43%;
-
+    --background: 222 47% 4%;
+    --foreground: 210 40% 98%;
+    
+    --card: 222 47% 6%;
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 222 47% 6%;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 280 100% 65%;
+    --primary-foreground: 210 40% 98%;
+    
+    --secondary: 180 100% 50%;
+    --secondary-foreground: 222 47% 4%;
+    
+    --muted: 217 33% 12%;
+    --muted-foreground: 215 20.2% 65.1%;
+    
+    --accent: 340 100% 60%;
+    --accent-foreground: 210 40% 98%;
+    
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 280 100% 65%;
+    
     --radius: 0.75rem;
-
-    /* Gradients */
-    --gradient-cosmic: linear-gradient(135deg, hsl(189 94% 43%), hsl(258 90% 66%));
-    --gradient-nebula: linear-gradient(135deg, hsl(258 90% 66%), hsl(322 90% 60%));
-    --gradient-stellar: linear-gradient(180deg, hsl(240 10% 3.9%), hsl(240 10% 8%));
-    
-    /* Glows */
-    --glow-cyan: 0 0 40px hsl(189 94% 43% / 0.4);
-    --glow-purple: 0 0 40px hsl(258 90% 66% / 0.4);
-    --glow-pink: 0 0 40px hsl(322 90% 60% / 0.4);
-    
-    /* Shadows */
-    --shadow-cosmic: 0 10px 40px -10px hsl(189 94% 43% / 0.3);
-    --shadow-deep: 0 20px 60px -15px hsl(240 10% 3.9% / 0.8);
-    
-    /* Transitions */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
@@ -68,94 +40,87 @@ All colors MUST be HSL.
   * {
     @apply border-border;
   }
-
+  
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
+    position: relative;
+    overflow-x: hidden;
   }
 
-  /* Starfield background */
   body::before {
     content: '';
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background: 
-      radial-gradient(2px 2px at 20% 30%, white, transparent),
-      radial-gradient(2px 2px at 60% 70%, white, transparent),
-      radial-gradient(1px 1px at 50% 50%, white, transparent),
-      radial-gradient(1px 1px at 80% 10%, white, transparent),
-      radial-gradient(2px 2px at 90% 60%, white, transparent),
-      radial-gradient(1px 1px at 33% 80%, white, transparent),
-      radial-gradient(1px 1px at 15% 90%, white, transparent);
-    background-size: 200% 200%;
-    background-position: 0% 0%;
-    animation: twinkle 200s linear infinite;
+      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(280 100% 65% / 0.15), transparent),
+      radial-gradient(ellipse 60% 60% at 0% 50%, hsl(180 100% 50% / 0.08), transparent),
+      radial-gradient(ellipse 60% 60% at 100% 50%, hsl(340 100% 60% / 0.08), transparent);
+    z-index: -2;
     pointer-events: none;
-    opacity: 0.4;
-    z-index: 0;
   }
 
-  @keyframes twinkle {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 0.6; }
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      radial-gradient(circle at 20% 50%, hsl(280 100% 65% / 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, hsl(180 100% 50% / 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 40% 20%, hsl(340 100% 60% / 0.02) 0%, transparent 50%);
+    z-index: -1;
+    pointer-events: none;
+    animation: ambient-pulse 8s ease-in-out infinite;
   }
 
-  /* Scrollbar styling */
-  ::-webkit-scrollbar {
-    width: 10px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: hsl(var(--background));
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: hsl(var(--primary));
-    border-radius: 5px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--primary-glow));
+  @keyframes ambient-pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
   }
 }
 
 @layer utilities {
-  .text-glow {
-    text-shadow: 0 0 20px currentColor;
+  .glass-card {
+    @apply bg-card/40 backdrop-blur-xl border border-border/50;
   }
-
-  .hover-glow {
-    transition: var(--transition-smooth);
+  
+  .glow-primary {
+    box-shadow: 0 0 30px hsl(280 100% 65% / 0.3);
   }
-
-  .hover-glow:hover {
-    filter: drop-shadow(var(--glow-cyan));
+  
+  .glow-secondary {
+    box-shadow: 0 0 30px hsl(180 100% 50% / 0.3);
   }
-
-  .neon-border {
-    border: 2px solid hsl(var(--primary));
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.5),
-                inset 0 0 20px hsl(var(--primary) / 0.2);
+  
+  .glow-accent {
+    box-shadow: 0 0 30px hsl(340 100% 60% / 0.3);
   }
-
-  .cosmic-gradient {
-    background: var(--gradient-cosmic);
+  
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent;
   }
-
-  .nebula-gradient {
-    background: var(--gradient-nebula);
+  
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
   }
-}
-
-@layer base {
-  * {
-    @apply border-border;
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
   }
-
-  body {
-    @apply bg-background text-foreground;
+  
+  .animate-glow {
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+  
+  @keyframes glow-pulse {
+    0%, 100% { 
+      box-shadow: 0 0 20px hsl(280 100% 65% / 0.4),
+                  0 0 40px hsl(280 100% 65% / 0.2);
+    }
+    50% { 
+      box-shadow: 0 0 40px hsl(280 100% 65% / 0.6),
+                  0 0 60px hsl(280 100% 65% / 0.3);
+    }
   }
 }
