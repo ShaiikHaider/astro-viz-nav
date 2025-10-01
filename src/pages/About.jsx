@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Rocket, Target, Database, Zap, Shield, Globe, Users, Award } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { Link } from 'react-router-dom';
 
 const About = () => {
   const features = [
@@ -305,20 +306,20 @@ const About = () => {
               Start simulating asteroid impacts and testing planetary defense strategies today
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="/simulator"
+              <Link
+                to="/simulator"
                 className="px-8 py-4 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-lg hover:opacity-90 transition-all inline-flex items-center justify-center gap-2"
               >
                 <Target className="w-5 h-5" />
                 Launch Simulator
-              </a>
-              <a
-                href="/explore"
+              </Link>
+              <Link
+                to="/explore"
                 className="px-8 py-4 bg-muted text-foreground font-bold rounded-lg hover:bg-muted/80 transition-all inline-flex items-center justify-center gap-2"
               >
                 <Globe className="w-5 h-5" />
                 Explore Asteroids
-              </a>
+              </Link>
             </div>
           </motion.div>
         </section>
