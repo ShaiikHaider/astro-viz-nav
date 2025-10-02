@@ -67,6 +67,7 @@ const AsteroidSimulator = () => {
   const [missionStatus, setMissionStatus] = useState('monitoring');
   const [showImpact, setShowImpact] = useState(false);
   const [impactLocation] = useState([20, -40]);
+  const [impactPosition, setImpactPosition] = useState([2, 0, 0]);
 
   // Update when asteroid selected
   useEffect(() => {
@@ -111,8 +112,25 @@ const AsteroidSimulator = () => {
     
     setMissionStatus(isDeflected ? 'success' : 'impact');
     
-    // Trigger impact animation when close
-    if (distanceFromEarth < 50000 && !isDeflected) {
+    // Trigger impact animation when asteroid reaches Earth surface (radius = 2)
+    const earthRadius = 2;
+    const distanceToCenter = Math.sqrt(
+      currentPosition.x * currentPosition.x +
+      currentPosition.y * currentPosition.y +
+      currentPosition.z * currentPosition.z
+    );
+    
+    if (distanceToCenter <= earthRadius + 0.3 && !isDeflected && !showImpact) {
+      // Calculate impact point on Earth's surface
+      const normalizedX = currentPosition.x / distanceToCenter;
+      const normalizedY = currentPosition.y / distanceToCenter;
+      const normalizedZ = currentPosition.z / distanceToCenter;
+      
+      const impactX = normalizedX * earthRadius;
+      const impactY = normalizedY * earthRadius;
+      const impactZ = normalizedZ * earthRadius;
+      
+      setImpactPosition([impactX, impactY, impactZ]);
       setShowImpact(true);
       setTimeout(() => setShowImpact(false), 3000);
     }
@@ -129,6 +147,7 @@ const AsteroidSimulator = () => {
     setSimulationTime(0);
     setDeltaV(0);
     setShowImpact(false);
+    setImpactPosition([2, 0, 0]);
     setTimeout(() => setIsPlaying(true), 100);
   };
 
@@ -375,7 +394,7 @@ const AsteroidSimulator = () => {
                     
                     {showImpact && (
                       <ImpactParticles 
-                        position={[2, 0, 0]} 
+                        position={impactPosition} 
                         active={showImpact} 
                       />
                     )}

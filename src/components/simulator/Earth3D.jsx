@@ -26,6 +26,11 @@ const Earth3D = () => {
 
   return (
     <group>
+      {/* Enhanced ambient light for brightness */}
+      <ambientLight intensity={1.2} />
+      <directionalLight position={[5, 3, 5]} intensity={2} />
+      <directionalLight position={[-5, -3, -5]} intensity={0.8} color="#6699ff" />
+      
       {/* Realistic Earth with textures */}
       <Sphere ref={earthRef} args={[2, 64, 64]}>
         <meshPhongMaterial
@@ -33,8 +38,10 @@ const Earth3D = () => {
           bumpMap={bumpTexture}
           bumpScale={0.05}
           specularMap={specularTexture}
-          specular={new THREE.Color('#333333')}
-          shininess={25}
+          specular={new THREE.Color('#888888')}
+          shininess={30}
+          emissive={new THREE.Color('#111122')}
+          emissiveIntensity={0.15}
         />
       </Sphere>
       
