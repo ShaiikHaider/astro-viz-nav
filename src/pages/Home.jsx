@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Telescope, Target, Rocket } from 'lucide-react';
+import { AlertTriangle, Telescope, Target, Rocket, ChevronDown } from 'lucide-react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Stars, OrbitControls } from '@react-three/drei';
 import Navbar from '../components/Navbar';
@@ -92,6 +92,21 @@ const Home = () => {
               transition={{ delay: 2.5, duration: 1 }}
             >
               <p className="text-xl md:text-2xl text-muted-foreground">Unnoticed. Unseen.</p>
+            </motion.div>
+            
+            {/* Scroll Down Indicator */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1, y: [0, 10, 0] }}
+              transition={{ 
+                opacity: { delay: 3.5, duration: 1 },
+                y: { repeat: Infinity, duration: 1.5, ease: "easeInOut" }
+              }}
+              className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 cursor-pointer"
+              onClick={() => window.scrollBy({ top: window.innerHeight, behavior: 'smooth' })}
+            >
+              <span className="text-sm text-muted-foreground uppercase tracking-wider">Scroll Down</span>
+              <ChevronDown className="w-8 h-8 text-primary" />
             </motion.div>
           </motion.div>
 
