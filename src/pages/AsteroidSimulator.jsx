@@ -11,6 +11,7 @@ import Asteroid3D from '../components/simulator/Asteroid3D';
 import OrbitPath from '../components/simulator/OrbitPath';
 import ImpactParticles from '../components/simulator/ImpactParticles';
 import LiveDataPanel from '../components/simulator/LiveDataPanel';
+import ImpactPredictionPanel from '../components/simulator/ImpactPredictionPanel';
 import { Button } from '../components/ui/button';
 import { Slider } from '../components/ui/slider';
 import { getPreloadedAsteroids, calculateOrbitalPosition } from '../utils/nasaDataParser';
@@ -334,6 +335,12 @@ const AsteroidSimulator = () => {
                   </div>
                 </motion.div>
               </AnimatePresence>
+
+              {/* Global Impact Predictions */}
+              <ImpactPredictionPanel 
+                impactData={impactData} 
+                missionStatus={missionStatus}
+              />
             </div>
 
             {/* Center - 3D Visualization */}
