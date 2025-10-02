@@ -48,7 +48,7 @@ const SceneController = ({
 
 const AsteroidSimulator = () => {
   const [asteroidList] = useState(getPreloadedAsteroids());
-  const storeAsteroid = useAsteroidStore(state => state.selectedAsteroid);
+  const { selectedAsteroid: storeAsteroid } = useAsteroidStore();
   const [selectedAsteroid, setSelectedAsteroid] = useState(storeAsteroid || asteroidList[0]);
   const [isPlaying, setIsPlaying] = useState(true);
   const [currentPosition, setCurrentPosition] = useState({ x: 6, y: 0, z: 0 });
