@@ -2,10 +2,11 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import asteroidLogo from '../assets/asteroid-logo.png';
+import AnimatedLogo3D from './AnimatedLogo3D';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [logoHovered, setLogoHovered] = useState(false);
   const location = useLocation();
 
   const navLinks = [
@@ -22,14 +23,13 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3 group">
-            <div className="w-20 h-20">
-              <img 
-                src={asteroidLogo} 
-                alt="AstroViz" 
-                className="w-full h-full object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] group-hover:drop-shadow-[0_0_25px_rgba(100,181,246,1)] transition-all duration-300"
-              />
-            </div>
+          <Link 
+            to="/" 
+            className="flex items-center space-x-3"
+            onMouseEnter={() => setLogoHovered(true)}
+            onMouseLeave={() => setLogoHovered(false)}
+          >
+            <AnimatedLogo3D isHovered={logoHovered} />
             <span className="text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
               AstroViz
             </span>
