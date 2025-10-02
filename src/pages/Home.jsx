@@ -77,24 +77,24 @@ const Home = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 1 }}
             >
-              <p className="text-xl md:text-2xl text-muted-foreground mb-4">It begins as a silent rock…</p>
+              <p className="text-xl md:text-2xl text-primary mb-4">It begins as a silent rock…</p>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.5, duration: 1 }}
             >
-              <p className="text-xl md:text-2xl text-muted-foreground mb-4">Drifting in the vastness of space…</p>
+              <p className="text-xl md:text-2xl text-secondary mb-4">Drifting in the vastness of space…</p>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 2.5, duration: 1 }}
             >
-              <p className="text-xl md:text-2xl text-muted-foreground">Unnoticed. Unseen.</p>
+              <p className="text-xl md:text-2xl text-accent">Unnoticed. Unseen.</p>
             </motion.div>
             
-            {/* Scroll Down Indicator */}
+            {/* Scroll Down Indicator - Centered */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1, y: [0, 10, 0] }}
@@ -105,8 +105,8 @@ const Home = () => {
               className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 cursor-pointer"
               onClick={() => window.scrollBy({ top: window.innerHeight, behavior: 'smooth' })}
             >
-              <span className="text-sm text-muted-foreground uppercase tracking-wider">Scroll Down</span>
-              <ChevronDown className="w-8 h-8 text-primary" />
+              <span className="text-sm text-primary uppercase tracking-wider drop-shadow-[0_0_10px_rgba(192,132,252,0.8)]">Scroll Down</span>
+              <ChevronDown className="w-8 h-8 text-primary drop-shadow-[0_0_15px_rgba(192,132,252,1)]" />
             </motion.div>
           </motion.div>
 

@@ -23,11 +23,11 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 group">
-            <div className="w-16 h-16">
+            <div className="w-20 h-20">
               <img 
                 src={asteroidLogo} 
                 alt="AstroViz" 
-                className="w-full h-full object-contain group-hover:drop-shadow-[0_0_20px_rgba(100,181,246,0.8)] transition-all duration-300"
+                className="w-full h-full object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] group-hover:drop-shadow-[0_0_25px_rgba(100,181,246,1)] transition-all duration-300"
               />
             </div>
             <span className="text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
