@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Logo3D from './Logo3D';
+import astrovizLogo from '../assets/astroviz-logo.png';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,8 +22,14 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3">
-            <Logo3D />
+          <Link to="/" className="flex items-center space-x-3 group">
+            <div className="relative w-14 h-14">
+              <img 
+                src={astrovizLogo} 
+                alt="AstroViz Logo" 
+                className="w-full h-full object-contain animate-float drop-shadow-[0_0_15px_rgba(255,255,255,0.6)] group-hover:drop-shadow-[0_0_25px_rgba(100,181,246,0.8)] group-hover:scale-110 transition-all duration-300"
+              />
+            </div>
             <span className="text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
               AstroViz
             </span>
