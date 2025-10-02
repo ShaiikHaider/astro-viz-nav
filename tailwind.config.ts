@@ -58,10 +58,10 @@ export default {
   			},
   			'glow-pulse': {
   				'0%, 100%': { 
-  					boxShadow: '0 0 20px hsl(184 100% 50% / 0.4), 0 0 40px hsl(184 100% 50% / 0.2)'
+  					boxShadow: '0 0 20px hsl(207 89% 68% / 0.4), 0 0 40px hsl(207 89% 68% / 0.2)'
   				},
   				'50%': { 
-  					boxShadow: '0 0 40px hsl(184 100% 50% / 0.6), 0 0 60px hsl(184 100% 50% / 0.3)'
+  					boxShadow: '0 0 40px hsl(207 89% 68% / 0.6), 0 0 60px hsl(207 89% 68% / 0.3)'
   				},
   			},
   			'slide-up': {
