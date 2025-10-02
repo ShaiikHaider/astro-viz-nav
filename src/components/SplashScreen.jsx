@@ -1,125 +1,133 @@
 import { useRef, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Sphere } from '@react-three/drei';
 import * as THREE from 'three';
 
-const Earth = () => {
-  const earthRef = useRef();
-  
-  useFrame(() => {
-    if (earthRef.current) {
-      earthRef.current.rotation.y += 0.002;
-    }
-  });
-
-  return (
-    <group ref={earthRef}>
-      <Sphere args={[1.5, 64, 64]} position={[0, 0, 0]}>
-        <meshStandardMaterial
-          color="#2563eb"
-          emissive="#1e40af"
-          emissiveIntensity={0.3}
-          metalness={0.4}
-          roughness={0.7}
-        />
-      </Sphere>
-      {/* Atmosphere glow */}
-      <Sphere args={[1.7, 64, 64]} position={[0, 0, 0]}>
-        <meshBasicMaterial
-          color="#60a5fa"
-          transparent
-          opacity={0.2}
-          side={THREE.BackSide}
-        />
-      </Sphere>
-    </group>
-  );
-};
-
-const Asteroid = ({ onCollision }) => {
+const GlowingAsteroid = () => {
   const asteroidRef = useRef();
-  const [collided, setCollided] = useState(false);
-  
-  useFrame(() => {
-    if (asteroidRef.current && !collided) {
-      // Move asteroid towards Earth
-      asteroidRef.current.position.z += 0.08;
-      asteroidRef.current.position.x -= 0.02;
-      asteroidRef.current.rotation.x += 0.05;
+  const glowRef = useRef();
+  const time = useRef(0);
+
+  useFrame((state, delta) => {
+    time.current += delta;
+    
+    if (asteroidRef.current) {
+      asteroidRef.current.rotation.x += 0.02;
       asteroidRef.current.rotation.y += 0.03;
-      
-      // Check collision
-      if (asteroidRef.current.position.z > -0.5) {
-        setCollided(true);
-        onCollision();
-      }
+      asteroidRef.current.rotation.z += 0.01;
+    }
+
+    if (glowRef.current) {
+      const pulse = 1 + Math.sin(time.current * 3) * 0.3;
+      glowRef.current.scale.setScalar(pulse);
+      glowRef.current.material.opacity = 0.4 + Math.sin(time.current * 3) * 0.2;
     }
   });
 
   return (
-    <group ref={asteroidRef} position={[-8, 2, -25]}>
-      <mesh>
-        <dodecahedronGeometry args={[0.8, 0]} />
+    <group>
+      {/* Core Asteroid */}
+      <mesh ref={asteroidRef}>
+        <dodecahedronGeometry args={[1.5, 1]} />
         <meshStandardMaterial
-          color="#78716c"
-          emissive="#ef4444"
-          emissiveIntensity={collided ? 2 : 0.2}
-          metalness={0.6}
-          roughness={0.4}
+          color="#c084fc"
+          emissive="#a855f7"
+          emissiveIntensity={1.5}
+          metalness={0.8}
+          roughness={0.3}
         />
       </mesh>
-      {/* Asteroid trail glow */}
-      <Sphere args={[1.2, 16, 16]}>
+
+      {/* Inner Glow */}
+      <mesh scale={1.8}>
+        <dodecahedronGeometry args={[1.5, 1]} />
         <meshBasicMaterial
-          color="#ef4444"
+          color="#c084fc"
+          transparent
+          opacity={0.4}
+        />
+      </mesh>
+
+      {/* Outer Pulsing Glow */}
+      <mesh ref={glowRef} scale={2.5}>
+        <sphereGeometry args={[1.5, 32, 32]} />
+        <meshBasicMaterial
+          color="#a855f7"
           transparent
           opacity={0.3}
+          side={THREE.BackSide}
         />
-      </Sphere>
+      </mesh>
+
+      {/* Rings */}
+      <mesh rotation={[Math.PI / 4, 0, 0]}>
+        <torusGeometry args={[2.5, 0.05, 16, 100]} />
+        <meshBasicMaterial
+          color="#00d9ff"
+          transparent
+          opacity={0.6}
+        />
+      </mesh>
+
+      <mesh rotation={[0, Math.PI / 4, Math.PI / 4]}>
+        <torusGeometry args={[3, 0.04, 16, 100]} />
+        <meshBasicMaterial
+          color="#ff006e"
+          transparent
+          opacity={0.5}
+        />
+      </mesh>
+
+      {/* Point lights for extra glow */}
+      <pointLight position={[0, 0, 0]} intensity={2} color="#c084fc" distance={10} />
+      <pointLight position={[2, 2, 2]} intensity={1} color="#00d9ff" distance={8} />
+      <pointLight position={[-2, -2, 2]} intensity={1} color="#ff006e" distance={8} />
     </group>
   );
 };
 
-const ImpactFlash = ({ show }) => {
-  if (!show) return null;
+const StarField = () => {
+  const starsRef = useRef();
   
+  const starPositions = new Float32Array(1000 * 3);
+  for (let i = 0; i < 1000; i++) {
+    starPositions[i * 3] = (Math.random() - 0.5) * 50;
+    starPositions[i * 3 + 1] = (Math.random() - 0.5) * 50;
+    starPositions[i * 3 + 2] = (Math.random() - 0.5) * 50;
+  }
+
+  useFrame(() => {
+    if (starsRef.current) {
+      starsRef.current.rotation.y += 0.0002;
+    }
+  });
+
   return (
-    <Sphere args={[3, 32, 32]} position={[0, 0, 0]}>
-      <meshBasicMaterial
+    <points ref={starsRef}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={1000}
+          array={starPositions}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.05}
         color="#ffffff"
         transparent
-        opacity={0.9}
+        opacity={0.8}
+        sizeAttenuation
       />
-    </Sphere>
+    </points>
   );
 };
 
-const Scene = ({ onComplete }) => {
-  const [showImpact, setShowImpact] = useState(false);
-
-  const handleCollision = () => {
-    setShowImpact(true);
-    setTimeout(() => {
-      onComplete();
-    }, 800);
-  };
-
+const Scene = () => {
   return (
     <>
-      <ambientLight intensity={0.3} />
-      <pointLight position={[10, 10, 10]} intensity={1} />
-      <pointLight position={[-10, -10, -10]} intensity={0.5} color="#c084fc" />
-      <directionalLight position={[5, 5, 5]} intensity={0.8} />
-      
-      <Earth />
-      <Asteroid onCollision={handleCollision} />
-      <ImpactFlash show={showImpact} />
-      
-      {/* Stars background */}
-      <mesh>
-        <sphereGeometry args={[50, 32, 32]} />
-        <meshBasicMaterial color="#000000" side={THREE.BackSide} />
-      </mesh>
+      <ambientLight intensity={0.2} />
+      <GlowingAsteroid />
+      <StarField />
     </>
   );
 };
@@ -127,29 +135,55 @@ const Scene = ({ onComplete }) => {
 const SplashScreen = ({ onComplete }) => {
   const [fadeOut, setFadeOut] = useState(false);
 
-  const handleAnimationComplete = () => {
-    setFadeOut(true);
-    setTimeout(onComplete, 1000);
-  };
+  useEffect(() => {
+    // Start fade out after 4 seconds, complete at 5 seconds
+    const timer = setTimeout(() => {
+      setFadeOut(true);
+    }, 4000);
+
+    const completeTimer = setTimeout(() => {
+      onComplete();
+    }, 5000);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(completeTimer);
+    };
+  }, [onComplete]);
 
   return (
     <div 
-      className={`fixed inset-0 z-50 bg-black transition-opacity duration-1000 ${
+      className={`fixed inset-0 z-50 bg-gradient-to-b from-black via-purple-950/20 to-black transition-opacity duration-1000 ${
         fadeOut ? 'opacity-0' : 'opacity-100'
       }`}
     >
       <Canvas
-        camera={{ position: [0, 0, 8], fov: 60 }}
+        camera={{ position: [0, 0, 6], fov: 60 }}
         style={{ width: '100%', height: '100%' }}
       >
-        <Scene onComplete={handleAnimationComplete} />
+        <Scene />
       </Canvas>
       
-      <div className="absolute bottom-10 left-0 right-0 text-center">
-        <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 animate-pulse">
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+        <h1 
+          className="text-6xl md:text-8xl font-bold mb-4 animate-pulse"
+          style={{
+            background: 'linear-gradient(135deg, #c084fc, #00d9ff, #ff006e)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            filter: 'drop-shadow(0 0 30px rgba(192, 132, 252, 0.8))',
+          }}
+        >
           AstroViz
         </h1>
-        <p className="text-lg text-gray-300">Loading the cosmos...</p>
+        <p 
+          className="text-xl text-white animate-pulse"
+          style={{
+            filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.6))',
+          }}
+        >
+          Exploring the Cosmos
+        </p>
       </div>
     </div>
   );
