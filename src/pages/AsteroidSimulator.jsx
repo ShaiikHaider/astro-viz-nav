@@ -14,6 +14,7 @@ import LiveDataPanel from '../components/simulator/LiveDataPanel';
 import ImpactPredictionPanel from '../components/simulator/ImpactPredictionPanel';
 import { Button } from '../components/ui/button';
 import { Slider } from '../components/ui/slider';
+import useAsteroidStore from '../store/asteroidStore';
 import { getPreloadedAsteroids, calculateOrbitalPosition } from '../utils/nasaDataParser';
 import { calculateImpactEnergy, energyToTNT, calculateCraterSize, calculateSeismicMagnitude } from '../utils/impactCalculations';
 import 'leaflet/dist/leaflet.css';
@@ -47,7 +48,8 @@ const SceneController = ({
 
 const AsteroidSimulator = () => {
   const [asteroidList] = useState(getPreloadedAsteroids());
-  const [selectedAsteroid, setSelectedAsteroid] = useState(asteroidList[0]);
+  const storeAsteroid = useAsteroidStore(state => state.selectedAsteroid);
+  const [selectedAsteroid, setSelectedAsteroid] = useState(storeAsteroid || asteroidList[0]);
   const [isPlaying, setIsPlaying] = useState(true);
   const [currentPosition, setCurrentPosition] = useState({ x: 6, y: 0, z: 0 });
   const [simulationTime, setSimulationTime] = useState(0);
@@ -69,7 +71,17 @@ const AsteroidSimulator = () => {
   const [impactLocation] = useState([20, -40]);
   const [impactPosition, setImpactPosition] = useState([2, 0, 0]);
 
-  // Update when asteroid selected
+  // Sync with store asteroid from Explore page
+  useEffect(() => {
+    if (storeAsteroid) {
+      setSelectedAsteroid(storeAsteroid);
+      setDiameter(storeAsteroid.diameter);
+      setVelocity(storeAsteroid.velocity);
+      setMass(storeAsteroid.mass);
+    }
+  }, [storeAsteroid]);
+
+  // Update when asteroid selected from dropdown
   useEffect(() => {
     if (selectedAsteroid) {
       setDiameter(selectedAsteroid.diameter);
@@ -112,7 +124,7 @@ const AsteroidSimulator = () => {
     
     setMissionStatus(isDeflected ? 'success' : 'impact');
     
-    // Trigger impact animation when asteroid reaches Earth surface (radius = 2)
+    // Enhanced collision detection - trigger explosion when asteroid hits Earth
     const earthRadius = 2;
     const distanceToCenter = Math.sqrt(
       currentPosition.x * currentPosition.x +
@@ -120,8 +132,11 @@ const AsteroidSimulator = () => {
       currentPosition.z * currentPosition.z
     );
     
-    if (distanceToCenter <= earthRadius + 0.3 && !isDeflected && !showImpact) {
-      // Calculate impact point on Earth's surface
+    // Collision threshold - game-like precision
+    const collisionThreshold = earthRadius + (diameter * 0.2);
+    
+    if (distanceToCenter <= collisionThreshold && !isDeflected && !showImpact) {
+      // Calculate precise impact point on Earth's surface
       const normalizedX = currentPosition.x / distanceToCenter;
       const normalizedY = currentPosition.y / distanceToCenter;
       const normalizedZ = currentPosition.z / distanceToCenter;
@@ -132,7 +147,9 @@ const AsteroidSimulator = () => {
       
       setImpactPosition([impactX, impactY, impactZ]);
       setShowImpact(true);
-      setTimeout(() => setShowImpact(false), 3000);
+      
+      // Keep explosion visible for 5 seconds (more dramatic)
+      setTimeout(() => setShowImpact(false), 5000);
     }
   }, [currentPosition, velocity, mass, angle, deltaV, simulationTime]);
 

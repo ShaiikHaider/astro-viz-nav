@@ -9,9 +9,9 @@ const ImpactParticles = ({ position, active }) => {
   const smokeRef = useRef();
   const timeRef = useRef(0);
 
-  const particleCount = 2000; // Increased for more dramatic effect
-  const debrisCount = 500;
-  const smokeCount = 300;
+  const particleCount = 3000; // Enhanced for game-like explosion
+  const debrisCount = 800;
+  const smokeCount = 500;
   
   const { positions, velocities, colors, sizes } = useMemo(() => {
     const pos = new Float32Array(particleCount * 3);
@@ -109,67 +109,86 @@ const ImpactParticles = ({ position, active }) => {
     if (!active) return;
     
     timeRef.current += delta;
-    const progress = timeRef.current / 3;
+    const progress = timeRef.current / 5; // Extended to 5 seconds for dramatic effect
+    const time = state.clock.getElapsedTime();
     
-    // Animate fireball particles
+    // Game-like acceleration curve for explosion
+    const explosionForce = Math.max(0, 1 - progress * 0.5);
+    const acceleration = 1 + progress * 2;
+    
+    // Animate fireball particles with acceleration
     if (fireballRef.current) {
       const positionAttribute = fireballRef.current.geometry.getAttribute('position');
       
       for (let i = 0; i < particleCount; i++) {
         const vel = velocities[i];
         
-        positionAttribute.setX(i, positionAttribute.getX(i) + vel.x);
-        positionAttribute.setY(i, positionAttribute.getY(i) + vel.y - 0.002); // Gravity
-        positionAttribute.setZ(i, positionAttribute.getZ(i) + vel.z);
+        // Particles accelerate outward then slow down
+        positionAttribute.setX(i, positionAttribute.getX(i) + vel.x * acceleration);
+        positionAttribute.setY(i, positionAttribute.getY(i) + vel.y * acceleration - 0.004); // Gravity
+        positionAttribute.setZ(i, positionAttribute.getZ(i) + vel.z * acceleration);
       }
       
       positionAttribute.needsUpdate = true;
       
-      // Fade out over time
-      fireballRef.current.material.opacity = Math.max(0, 1 - progress);
+      // Multi-stage fade with flash effect
+      if (progress < 0.1) {
+        fireballRef.current.material.opacity = 1.0;
+      } else {
+        fireballRef.current.material.opacity = Math.max(0, 1 - progress);
+      }
     }
     
-    // Animate debris
+    // Animate debris with dramatic movement
     if (debrisRef.current) {
       const positionAttribute = debrisRef.current.geometry.getAttribute('position');
       
       for (let i = 0; i < debrisCount; i++) {
         const vel = debrisVelocities[i];
         
-        positionAttribute.setX(i, positionAttribute.getX(i) + vel.x);
-        positionAttribute.setY(i, positionAttribute.getY(i) + vel.y - 0.003); // More gravity
-        positionAttribute.setZ(i, positionAttribute.getZ(i) + vel.z);
+        positionAttribute.setX(i, positionAttribute.getX(i) + vel.x * explosionForce * 1.5);
+        positionAttribute.setY(i, positionAttribute.getY(i) + vel.y * explosionForce * 1.5 - 0.005); // More gravity
+        positionAttribute.setZ(i, positionAttribute.getZ(i) + vel.z * explosionForce * 1.5);
       }
       
       positionAttribute.needsUpdate = true;
-      debrisRef.current.material.opacity = Math.max(0, 0.8 - progress);
+      debrisRef.current.material.opacity = Math.max(0, 0.9 - progress);
     }
     
-    // Animate smoke
+    // Animate smoke with billowing effect
     if (smokeRef.current) {
       const positionAttribute = smokeRef.current.geometry.getAttribute('position');
       
       for (let i = 0; i < smokeCount; i++) {
         const vel = smokeVelocities[i];
+        const drift = Math.sin(time * 2 + i) * 0.02;
         
-        positionAttribute.setX(i, positionAttribute.getX(i) + vel.x * 0.5);
-        positionAttribute.setY(i, positionAttribute.getY(i) + vel.y - 0.0005);
-        positionAttribute.setZ(i, positionAttribute.getZ(i) + vel.z * 0.5);
+        positionAttribute.setX(i, positionAttribute.getX(i) + vel.x * 0.6 + drift);
+        positionAttribute.setY(i, positionAttribute.getY(i) + vel.y * 0.6 + 0.01);
+        positionAttribute.setZ(i, positionAttribute.getZ(i) + vel.z * 0.6);
       }
       
       positionAttribute.needsUpdate = true;
-      smokeRef.current.material.opacity = Math.max(0, 0.6 - progress * 0.8);
+      smokeRef.current.material.opacity = Math.max(0, 0.7 - progress * 0.7);
     }
     
-    // Animate shockwave
+    // Multi-stage shockwave expansion (game-like)
     if (shockwaveRef.current) {
-      const scale = 1 + progress * 8;
-      shockwaveRef.current.scale.set(scale, scale, scale);
-      shockwaveRef.current.material.opacity = Math.max(0, 0.6 - progress);
+      if (progress < 0.3) {
+        // Rapid initial expansion
+        const scale = 1 + progress * 30;
+        shockwaveRef.current.scale.set(scale, scale, scale);
+        shockwaveRef.current.material.opacity = 0.9;
+      } else {
+        // Slower dissipation
+        const scale = 10 + (progress - 0.3) * 15;
+        shockwaveRef.current.scale.set(scale, scale, scale);
+        shockwaveRef.current.material.opacity = Math.max(0, 0.8 - progress);
+      }
     }
     
-    // Reset after 3 seconds
-    if (timeRef.current > 3) {
+    // Reset after 5 seconds
+    if (timeRef.current > 5) {
       timeRef.current = 0;
     }
   });
@@ -201,7 +220,7 @@ const ImpactParticles = ({ position, active }) => {
           />
         </bufferGeometry>
         <pointsMaterial
-          size={0.12}
+          size={0.15}
           vertexColors
           transparent
           opacity={1}
@@ -261,13 +280,24 @@ const ImpactParticles = ({ position, active }) => {
         />
       </mesh>
       
-      {/* Central flash */}
+      {/* Central flash - Enhanced */}
       <mesh position={position}>
-        <sphereGeometry args={[0.3, 16, 16]} />
+        <sphereGeometry args={[0.5, 16, 16]} />
         <meshBasicMaterial
-          color="#ffff00"
+          color="#ffffff"
           transparent
-          opacity={0.9}
+          opacity={0.95}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+      
+      {/* Secondary flash ring */}
+      <mesh position={position}>
+        <sphereGeometry args={[0.8, 16, 16]} />
+        <meshBasicMaterial
+          color="#ff9900"
+          transparent
+          opacity={0.5}
           blending={THREE.AdditiveBlending}
         />
       </mesh>
