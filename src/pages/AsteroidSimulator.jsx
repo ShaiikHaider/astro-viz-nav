@@ -1,174 +1,411 @@
-import { useState, useEffect, Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Stars, Sphere } from '@react-three/drei';
+import { useState, useEffect, useRef } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, Stars, PerspectiveCamera } from '@react-three/drei';
 import { MapContainer, TileLayer, Circle, Popup } from 'react-leaflet';
-import { motion } from 'framer-motion';
-import { Rocket, Target, Zap, Shield, AlertTriangle, CheckCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Rocket, Shield, AlertTriangle, CheckCircle, Play, RotateCcw, Zap } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import useAsteroidStore from '../store/asteroidStore';
-import { browseAsteroids, extractAsteroidData, getFallbackAsteroids } from '../utils/nasaApi';
+import Earth3D from '../components/simulator/Earth3D';
+import Asteroid3D from '../components/simulator/Asteroid3D';
+import OrbitPath from '../components/simulator/OrbitPath';
+import ImpactParticles from '../components/simulator/ImpactParticles';
+import LiveDataPanel from '../components/simulator/LiveDataPanel';
+import { Button } from '../components/ui/button';
+import { Slider } from '../components/ui/slider';
+import { getPreloadedAsteroids, calculateOrbitalPosition } from '../utils/nasaDataParser';
 import { calculateImpactEnergy, energyToTNT, calculateCraterSize, calculateSeismicMagnitude } from '../utils/impactCalculations';
 import 'leaflet/dist/leaflet.css';
 
-// 3D Earth Component
-const Earth = () => {
-  return (
-    <Sphere args={[2, 64, 64]}>
-      <meshStandardMaterial color="#0077be" roughness={0.5} metalness={0.2} />
-    </Sphere>
-  );
-};
-
-// 3D Asteroid
-const Asteroid = ({ position, size }) => {
-  return (
-    <mesh position={position}>
-      <icosahedronGeometry args={[size, 1]} />
-      <meshStandardMaterial color="#888" roughness={0.8} />
-    </mesh>
-  );
-};
-
-// Trajectory Line
-const TrajectoryLine = ({ start, end }) => {
-  const points = [];
-  for (let i = 0; i <= 50; i++) {
-    const t = i / 50;
-    points.push([
-      start[0] + (end[0] - start[0]) * t,
-      start[1] + (end[1] - start[1]) * t,
-      start[2] + (end[2] - start[2]) * t
-    ]);
-  }
+// Scene Controller for animation
+const SceneController = ({ 
+  isPlaying, 
+  asteroidData, 
+  deflectionDeltaV,
+  onPositionUpdate 
+}) => {
+  const timeRef = useRef(0);
   
-  return (
-    <line>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={points.length}
-          array={new Float32Array(points.flat())}
-          itemSize={3}
-        />
-      </bufferGeometry>
-      <lineBasicMaterial color="#ff0000" linewidth={2} />
-    </line>
-  );
+  useFrame((state, delta) => {
+    if (!isPlaying) return;
+    
+    timeRef.current += delta * 0.5;
+    
+    const pos = calculateOrbitalPosition(
+      timeRef.current,
+      asteroidData.semiMajorAxis,
+      asteroidData.eccentricity,
+      0
+    );
+    
+    onPositionUpdate(pos, timeRef.current);
+  });
+  
+  return null;
 };
 
 const AsteroidSimulator = () => {
-  const {
-    diameter,
-    velocity,
-    angle,
-    mass,
-    deflectionMethod,
-    deltaV,
-    updateParameter,
-    setDeflection,
-    selectedAsteroid
-  } = useAsteroidStore();
+  const [asteroidList] = useState(getPreloadedAsteroids());
+  const [selectedAsteroid, setSelectedAsteroid] = useState(asteroidList[0]);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [currentPosition, setCurrentPosition] = useState({ x: 6, y: 0, z: 0 });
+  const [simulationTime, setSimulationTime] = useState(0);
+  
+  // Simulation parameters
+  const [diameter, setDiameter] = useState(selectedAsteroid?.diameter || 1.0);
+  const [velocity, setVelocity] = useState(selectedAsteroid?.velocity || 20);
+  const [mass, setMass] = useState(selectedAsteroid?.mass || 1.5e12);
+  const [angle, setAngle] = useState(45);
+  
+  // Deflection
+  const [deflectionMethod, setDeflectionMethod] = useState('kinetic');
+  const [deltaV, setDeltaV] = useState(0);
+  
+  // Results
+  const [impactData, setImpactData] = useState(null);
+  const [missionStatus, setMissionStatus] = useState('monitoring');
+  const [showImpact, setShowImpact] = useState(false);
+  const [impactLocation] = useState([20, -40]);
 
-  const [asteroidList, setAsteroidList] = useState([]);
-  const [impactResults, setImpactResults] = useState(null);
-  const [missionStatus, setMissionStatus] = useState('pending');
-  const [impactLocation, setImpactLocation] = useState([20, -40]); // Default lat/lng
-
+  // Update when asteroid selected
   useEffect(() => {
-    // Load asteroid data
-    const loadAsteroids = async () => {
-      try {
-        const data = await browseAsteroids(0);
-        setAsteroidList(data || getFallbackAsteroids());
-      } catch (error) {
-        setAsteroidList(getFallbackAsteroids());
-      }
-    };
-    loadAsteroids();
-  }, []);
+    if (selectedAsteroid) {
+      setDiameter(selectedAsteroid.diameter);
+      setVelocity(selectedAsteroid.velocity);
+      setMass(selectedAsteroid.mass);
+    }
+  }, [selectedAsteroid]);
 
+  // Calculate impact continuously
   useEffect(() => {
-    // Calculate impact when parameters change
-    calculateImpact();
-  }, [diameter, velocity, angle, mass, deltaV]);
-
-  const calculateImpact = () => {
-    const energy = calculateImpactEnergy(mass, velocity - deltaV);
+    const effectiveVelocity = Math.max(0, velocity - deltaV);
+    const energy = calculateImpactEnergy(mass, effectiveVelocity);
     const tnt = energyToTNT(energy);
     const craterSize = calculateCraterSize(energy, angle);
     const seismic = calculateSeismicMagnitude(energy);
-
-    const deflected = deltaV >= velocity * 0.1; // 10% velocity change deflects
-
-    setImpactResults({
-      energy: energy.toExponential(2),
-      tnt: tnt.toFixed(2),
-      craterSize: craterSize.toFixed(2),
-      seismicMagnitude: seismic.toFixed(2),
-      deflected
+    
+    const distanceFromEarth = Math.sqrt(
+      currentPosition.x * currentPosition.x +
+      currentPosition.y * currentPosition.y +
+      currentPosition.z * currentPosition.z
+    ) * 150000; // Scale to km
+    
+    const timeToImpact = distanceFromEarth / velocity / 86400; // days
+    
+    const isDeflected = deltaV >= velocity * 0.05 || distanceFromEarth > 800000;
+    
+    setImpactData({
+      distanceFromEarth,
+      currentVelocity: effectiveVelocity,
+      timeToImpact,
+      impactEnergy: tnt,
+      craterSize,
+      seismicMagnitude: seismic,
+      position: {
+        x: currentPosition.x * 150000,
+        y: currentPosition.y * 150000,
+        z: currentPosition.z * 150000
+      }
     });
+    
+    setMissionStatus(isDeflected ? 'success' : 'impact');
+    
+    // Trigger impact animation when close
+    if (distanceFromEarth < 50000 && !isDeflected) {
+      setShowImpact(true);
+      setTimeout(() => setShowImpact(false), 3000);
+    }
+  }, [currentPosition, velocity, mass, angle, deltaV, simulationTime]);
 
-    setMissionStatus(deflected ? 'success' : 'impact');
+  const handlePositionUpdate = (pos, time) => {
+    setCurrentPosition(pos);
+    setSimulationTime(time);
   };
 
-  const handleAsteroidSelect = (asteroidData) => {
-    const extracted = extractAsteroidData(asteroidData);
-    updateParameter('diameter', extracted.diameter);
-    updateParameter('velocity', extracted.velocity);
-    updateParameter('mass', extracted.mass);
+  const handleReset = () => {
+    setIsPlaying(false);
+    setCurrentPosition({ x: 6, y: 0, z: 0 });
+    setSimulationTime(0);
+    setDeltaV(0);
+    setShowImpact(false);
+    setTimeout(() => setIsPlaying(true), 100);
   };
 
   return (
     <>
       <Navbar />
-      <div className="min-h-screen pt-16 pb-20">
-        <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="min-h-screen pt-16 pb-20 bg-gradient-to-b from-background via-background to-primary/5">
+        <div className="max-w-[1800px] mx-auto px-4 py-8">
+          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-8"
           >
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-              Asteroid Impact Simulator
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gradient-primary">
+              🚀 Asteroid Trajectory & Impact Simulator
             </h1>
             <p className="text-xl text-muted-foreground">
-              Model trajectories, predict impacts, and test defense strategies
+              Real-time dynamic 3D simulation with NASA data
             </p>
           </motion.div>
 
           <div className="grid lg:grid-cols-3 gap-6">
-            {/* 3D Visualization - Center/Left */}
+            {/* Left Panel - Controls */}
+            <div className="space-y-6">
+              {/* Asteroid Selection */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="glass-card p-6"
+              >
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                  <Rocket className="w-5 h-5 text-primary" />
+                  Select Asteroid
+                </h3>
+                <select
+                  className="w-full p-3 rounded-lg bg-background border border-border text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  value={asteroidList.indexOf(selectedAsteroid)}
+                  onChange={(e) => setSelectedAsteroid(asteroidList[e.target.value])}
+                >
+                  {asteroidList.map((asteroid, idx) => (
+                    <option key={asteroid.id} value={idx}>
+                      {asteroid.name} {asteroid.isPotentiallyHazardous ? '⚠️' : ''}
+                    </option>
+                  ))}
+                </select>
+                
+                {selectedAsteroid && (
+                  <div className="mt-4 p-3 bg-background/50 rounded-lg border border-border/50 text-sm space-y-1">
+                    <p><span className="text-muted-foreground">Diameter:</span> <span className="font-mono text-primary">{selectedAsteroid.diameter.toFixed(2)} km</span></p>
+                    <p><span className="text-muted-foreground">Velocity:</span> <span className="font-mono text-secondary">{selectedAsteroid.velocity.toFixed(2)} km/s</span></p>
+                    <p><span className="text-muted-foreground">Hazardous:</span> {selectedAsteroid.isPotentiallyHazardous ? '⚠️ Yes' : '✅ No'}</p>
+                  </div>
+                )}
+              </motion.div>
+
+              {/* Parameters */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="glass-card p-6"
+              >
+                <h3 className="text-lg font-bold mb-4">Simulation Parameters</h3>
+                <div className="space-y-6">
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <label className="text-sm text-muted-foreground">Diameter (km)</label>
+                      <span className="text-sm font-mono text-primary">{diameter.toFixed(2)} km</span>
+                    </div>
+                    <Slider
+                      value={[diameter]}
+                      onValueChange={([v]) => setDiameter(v)}
+                      min={0.1}
+                      max={10}
+                      step={0.1}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <label className="text-sm text-muted-foreground">Velocity (km/s)</label>
+                      <span className="text-sm font-mono text-secondary">{velocity.toFixed(1)} km/s</span>
+                    </div>
+                    <Slider
+                      value={[velocity]}
+                      onValueChange={([v]) => setVelocity(v)}
+                      min={5}
+                      max={50}
+                      step={1}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <label className="text-sm text-muted-foreground">Impact Angle (°)</label>
+                      <span className="text-sm font-mono text-accent">{angle}°</span>
+                    </div>
+                    <Slider
+                      value={[angle]}
+                      onValueChange={([v]) => setAngle(v)}
+                      min={15}
+                      max={90}
+                      step={5}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Planetary Defense */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="glass-card p-6"
+              >
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-secondary" />
+                  Planetary Defense System
+                </h3>
+                <div className="space-y-4">
+                  <select
+                    className="w-full p-3 rounded-lg bg-background border border-border text-sm"
+                    value={deflectionMethod}
+                    onChange={(e) => setDeflectionMethod(e.target.value)}
+                  >
+                    <option value="kinetic">🚀 Kinetic Impactor</option>
+                    <option value="ion">🔋 Ion Beam Thruster</option>
+                    <option value="nuclear">☢️ Nuclear Blast</option>
+                    <option value="gravity">🛸 Gravity Tractor</option>
+                  </select>
+
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <label className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Zap className="w-3 h-3" />
+                        Deflection Delta-V (km/s)
+                      </label>
+                      <span className="text-sm font-mono text-yellow-500">{deltaV.toFixed(2)} km/s</span>
+                    </div>
+                    <Slider
+                      value={[deltaV]}
+                      onValueChange={([v]) => setDeltaV(v)}
+                      min={0}
+                      max={10}
+                      step={0.1}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => setIsPlaying(!isPlaying)}
+                      className="flex-1"
+                      variant={isPlaying ? "secondary" : "default"}
+                    >
+                      <Play className="w-4 h-4 mr-2" />
+                      {isPlaying ? 'Pause' : 'Play'}
+                    </Button>
+                    <Button
+                      onClick={handleReset}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      Reset
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Mission Status */}
+              <AnimatePresence>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className={`glass-card p-6 border-2 ${
+                    missionStatus === 'success'
+                      ? 'border-green-500 bg-green-500/10'
+                      : 'border-red-500 bg-red-500/10'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    {missionStatus === 'success' ? (
+                      <>
+                        <CheckCircle className="w-8 h-8 text-green-500 animate-pulse" />
+                        <div>
+                          <h3 className="font-bold text-green-500 text-lg">Earth Saved! 🌍</h3>
+                          <p className="text-sm text-green-600">Deflection successful</p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <AlertTriangle className="w-8 h-8 text-red-500 animate-pulse" />
+                        <div>
+                          <h3 className="font-bold text-red-500 text-lg">Impact Warning!</h3>
+                          <p className="text-sm text-red-600">Deflection required</p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Center - 3D Visualization */}
             <div className="lg:col-span-2 space-y-6">
-              {/* 3D Orbit View */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-card border border-border rounded-xl p-4 h-[500px]"
+                className="glass-card p-6 h-[600px]"
               >
-                <h3 className="text-lg font-semibold mb-2">3D Orbit Visualization</h3>
-                <div className="w-full h-full">
-                  <Canvas camera={{ position: [8, 5, 8], fov: 60 }}>
-                    <ambientLight intensity={0.5} />
-                    <pointLight position={[10, 10, 10]} intensity={1} />
-                    <Stars radius={300} depth={50} count={3000} factor={4} />
-                    <Earth />
-                    <Asteroid position={[5, 0, 0]} size={diameter * 0.5} />
-                    <TrajectoryLine start={[10, 2, 0]} end={[2.5, 0.5, 0]} />
-                    <OrbitControls enableZoom enablePan autoRotate autoRotateSpeed={0.3} />
+                <h3 className="text-lg font-bold mb-4">3D Trajectory Visualization</h3>
+                <div className="w-full h-full rounded-xl overflow-hidden">
+                  <Canvas>
+                    <PerspectiveCamera makeDefault position={[10, 8, 10]} fov={50} />
+                    <ambientLight intensity={0.3} />
+                    <pointLight position={[15, 15, 15]} intensity={1.5} />
+                    <pointLight position={[-15, -5, -15]} intensity={0.5} color="#4488ff" />
+                    
+                    <Stars radius={300} depth={50} count={5000} factor={4} fade speed={1} />
+                    
+                    <Earth3D />
+                    <Asteroid3D 
+                      position={[currentPosition.x, currentPosition.y, currentPosition.z]} 
+                      size={Math.max(0.1, diameter * 0.2)}
+                      isDeflected={missionStatus === 'success'}
+                    />
+                    <OrbitPath 
+                      semiMajorAxis={selectedAsteroid?.semiMajorAxis || 1.5}
+                      eccentricity={selectedAsteroid?.eccentricity || 0.2}
+                      isDeflected={missionStatus === 'success'}
+                      showDeflectedPath={deltaV > 0}
+                    />
+                    
+                    {showImpact && (
+                      <ImpactParticles 
+                        position={[2, 0, 0]} 
+                        active={showImpact} 
+                      />
+                    )}
+                    
+                    <OrbitControls 
+                      enableZoom 
+                      enablePan 
+                      autoRotate={isPlaying}
+                      autoRotateSpeed={0.5}
+                      minDistance={5}
+                      maxDistance={30}
+                    />
+                    
+                    <SceneController
+                      isPlaying={isPlaying}
+                      asteroidData={selectedAsteroid || asteroidList[0]}
+                      deflectionDeltaV={deltaV}
+                      onPositionUpdate={handlePositionUpdate}
+                    />
                   </Canvas>
                 </div>
               </motion.div>
+
+              {/* Live Data Dashboard */}
+              {impactData && (
+                <LiveDataPanel data={impactData} />
+              )}
 
               {/* Impact Map */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.1 }}
-                className="bg-card border border-border rounded-xl p-4 h-[400px]"
+                className="glass-card p-6 h-[400px]"
               >
-                <h3 className="text-lg font-semibold mb-2">Impact Location & Effects</h3>
-                <div className="w-full h-full rounded-lg overflow-hidden">
+                <h3 className="text-lg font-bold mb-4">Impact Zone Prediction</h3>
+                <div className="w-full h-full rounded-xl overflow-hidden">
                   <MapContainer
                     center={impactLocation}
                     zoom={5}
@@ -178,176 +415,30 @@ const AsteroidSimulator = () => {
                       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       attribution='&copy; OpenStreetMap contributors'
                     />
-                    <Circle
-                      center={impactLocation}
-                      radius={impactResults ? parseFloat(impactResults.craterSize) * 1000 : 10000}
-                      pathOptions={{ color: 'red', fillColor: 'red', fillOpacity: 0.4 }}
-                    >
-                      <Popup>
-                        <div className="text-sm">
-                          <p className="font-bold">Impact Zone</p>
-                          <p>Crater: {impactResults?.craterSize} km</p>
-                          <p>Magnitude: {impactResults?.seismicMagnitude}</p>
-                        </div>
-                      </Popup>
-                    </Circle>
+                    {impactData && missionStatus === 'impact' && (
+                      <Circle
+                        center={impactLocation}
+                        radius={parseFloat(impactData.craterSize) * 1000}
+                        pathOptions={{ 
+                          color: '#ef4444', 
+                          fillColor: '#ef4444', 
+                          fillOpacity: 0.4,
+                          weight: 2
+                        }}
+                      >
+                        <Popup>
+                          <div className="text-sm font-bold">
+                            <p className="text-red-600 mb-1">⚠️ Impact Zone</p>
+                            <p>Crater: {impactData.craterSize.toFixed(2)} km</p>
+                            <p>Energy: {impactData.impactEnergy.toFixed(2)} MT</p>
+                            <p>Magnitude: {impactData.seismicMagnitude.toFixed(2)}</p>
+                          </div>
+                        </Popup>
+                      </Circle>
+                    )}
                   </MapContainer>
                 </div>
               </motion.div>
-            </div>
-
-            {/* Control Panel - Right Sidebar */}
-            <div className="space-y-6">
-              {/* Asteroid Selection */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="bg-card border border-border rounded-xl p-4"
-              >
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <Target className="w-5 h-5 text-primary" />
-                  Select Asteroid
-                </h3>
-                <select
-                  className="w-full p-2 rounded-lg bg-background border border-border text-sm"
-                  onChange={(e) => {
-                    const asteroid = asteroidList[e.target.value];
-                    if (asteroid) handleAsteroidSelect(asteroid);
-                  }}
-                >
-                  <option>Choose from NASA data...</option>
-                  {asteroidList.slice(0, 20).map((asteroid, idx) => (
-                    <option key={asteroid.id} value={idx}>
-                      {asteroid.name}
-                    </option>
-                  ))}
-                </select>
-              </motion.div>
-
-              {/* Parameters */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-card border border-border rounded-xl p-4"
-              >
-                <h3 className="text-lg font-semibold mb-4">Parameters</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm text-muted-foreground">Diameter (km)</label>
-                    <input
-                      type="range"
-                      min="0.1"
-                      max="10"
-                      step="0.1"
-                      value={diameter}
-                      onChange={(e) => updateParameter('diameter', parseFloat(e.target.value))}
-                      className="w-full"
-                    />
-                    <span className="text-sm font-mono">{diameter.toFixed(1)} km</span>
-                  </div>
-
-                  <div>
-                    <label className="text-sm text-muted-foreground">Velocity (km/s)</label>
-                    <input
-                      type="range"
-                      min="5"
-                      max="50"
-                      step="1"
-                      value={velocity}
-                      onChange={(e) => updateParameter('velocity', parseFloat(e.target.value))}
-                      className="w-full"
-                    />
-                    <span className="text-sm font-mono">{velocity} km/s</span>
-                  </div>
-
-                  <div>
-                    <label className="text-sm text-muted-foreground">Impact Angle (°)</label>
-                    <input
-                      type="range"
-                      min="15"
-                      max="90"
-                      step="5"
-                      value={angle}
-                      onChange={(e) => updateParameter('angle', parseFloat(e.target.value))}
-                      className="w-full"
-                    />
-                    <span className="text-sm font-mono">{angle}°</span>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Defense Strategy */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="bg-card border border-border rounded-xl p-4"
-              >
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-secondary" />
-                  Planetary Defense
-                </h3>
-                <div className="space-y-4">
-                  <select
-                    className="w-full p-2 rounded-lg bg-background border border-border text-sm"
-                    value={deflectionMethod}
-                    onChange={(e) => setDeflection(e.target.value, deltaV)}
-                  >
-                    <option value="kinetic">Kinetic Impactor 🚀</option>
-                    <option value="ion">Ion Thruster 🔋</option>
-                    <option value="nuclear">Nuclear Blast ☢️</option>
-                    <option value="gravity">Gravity Tractor 🛸</option>
-                  </select>
-
-                  <div>
-                    <label className="text-sm text-muted-foreground">Delta-V (km/s)</label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="5"
-                      step="0.1"
-                      value={deltaV}
-                      onChange={(e) => setDeflection(deflectionMethod, parseFloat(e.target.value))}
-                      className="w-full"
-                    />
-                    <span className="text-sm font-mono">{deltaV.toFixed(1)} km/s</span>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Results */}
-              {impactResults && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className={`rounded-xl p-4 border-2 ${
-                    missionStatus === 'success'
-                      ? 'bg-green-500/10 border-green-500'
-                      : 'bg-destructive/10 border-destructive'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-4">
-                    {missionStatus === 'success' ? (
-                      <>
-                        <CheckCircle className="w-6 h-6 text-green-500" />
-                        <h3 className="font-bold text-green-500">Earth Saved! 🌍</h3>
-                      </>
-                    ) : (
-                      <>
-                        <AlertTriangle className="w-6 h-6 text-destructive" />
-                        <h3 className="font-bold text-destructive">Impact Imminent</h3>
-                      </>
-                    )}
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <p><strong>Energy:</strong> {impactResults.energy} J</p>
-                    <p><strong>TNT Equivalent:</strong> {impactResults.tnt} MT</p>
-                    <p><strong>Crater Size:</strong> {impactResults.craterSize} km</p>
-                    <p><strong>Seismic Magnitude:</strong> {impactResults.seismicMagnitude}</p>
-                  </div>
-                </motion.div>
-              )}
             </div>
           </div>
         </div>
