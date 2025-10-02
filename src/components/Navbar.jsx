@@ -27,7 +27,7 @@ const Navbar = () => {
               <img 
                 src={astrovizLogo} 
                 alt="AstroViz Logo" 
-                className="w-full h-full object-contain animate-float drop-shadow-[0_0_15px_rgba(255,255,255,0.6)] group-hover:drop-shadow-[0_0_25px_rgba(100,181,246,0.8)] group-hover:scale-110 transition-all duration-300"
+                className="w-full h-full object-contain group-hover:drop-shadow-[0_0_20px_rgba(100,181,246,0.9)] transition-all duration-300"
               />
             </div>
             <span className="text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
