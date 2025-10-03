@@ -42,7 +42,14 @@ const asteroidImages = [
 
 const ExploreAsteroids = () => {
   const navigate = useNavigate();
-  const setSelectedAsteroid = useAsteroidStore((state) => state.setSelectedAsteroid);
+  // Avoid using the zustand hook here to prevent invalid hook calls
+  const setSelectedAsteroidSafe = (asteroid) => {
+    try {
+      useAsteroidStore.getState().setSelectedAsteroid(asteroid);
+    } catch (err) {
+      console.error('Asteroid store setSelectedAsteroid failed', err);
+    }
+  };
   
   const [asteroids, setAsteroids] = useState([]);
   const [filteredAsteroids, setFilteredAsteroids] = useState([]);
@@ -108,7 +115,7 @@ const ExploreAsteroids = () => {
 
   const handleSimulate = (asteroid) => {
     const extracted = extractAsteroidData(asteroid);
-    setSelectedAsteroid(extracted);
+    setSelectedAsteroidSafe(extracted);
     navigate('/simulator');
   };
 
