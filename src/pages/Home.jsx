@@ -70,7 +70,7 @@ const Home = () => {
           
           {/* Full Page Background Image with Shine Effect */}
           <div 
-            className="absolute inset-0 z-0 animate-rotate360"
+            className="absolute inset-0 z-0"
             style={{
               backgroundImage: `url(${spaceBackground})`,
               backgroundSize: 'cover',

@@ -50,7 +50,6 @@ export default {
   			'glow': 'glow-pulse 3s ease-in-out infinite',
   			'slide-up': 'slide-up 0.5s ease-out',
   			'slide-down': 'slide-down 0.5s ease-out',
-  			'rotate360': 'rotate360 60s linear infinite',
   		},
   		keyframes: {
   			'float': {
@@ -72,10 +71,6 @@ export default {
   			'slide-down': {
   				'0%': { transform: 'translateY(-100px)', opacity: '0' },
   				'100%': { transform: 'translateY(0)', opacity: '1' },
-  			},
-  			'rotate360': {
-  				'0%': { transform: 'rotate(0deg)' },
-  				'100%': { transform: 'rotate(360deg)' },
   			},
   		},
   	}
