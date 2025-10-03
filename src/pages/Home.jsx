@@ -6,7 +6,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Stars, OrbitControls } from '@react-three/drei';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import AnimatedSpaceBackground from '../components/AnimatedSpaceBackground';
+import spaceBackground from '../assets/space-background.jpg';
 
 // Simple 3D Asteroid component with scroll-based scaling
 const Asteroid3D = ({ scrollProgress }) => {
@@ -68,8 +68,19 @@ const Home = () => {
         {/* Fixed viewport for scenes */}
         <div className="sticky top-0 h-screen w-full overflow-hidden">
           
-          {/* Animated Space Background with Moving Asteroids */}
-          <AnimatedSpaceBackground />
+          {/* Full Page Background Image with Shine Effect */}
+          <div 
+            className="absolute inset-0 z-0"
+            style={{
+              backgroundImage: `url(${spaceBackground})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+            }}
+          >
+            {/* Shiny overlay effect */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 animate-pulse" />
+          </div>
           
           {/* Scene 1 - Silent Beginning */}
           <motion.div
@@ -229,6 +240,16 @@ const Home = () => {
             </motion.div>
           </motion.div>
 
+          {/* 3D Background with Asteroid - Overlay on top of image */}
+          <div className="absolute inset-0 z-[5] pointer-events-none">
+            <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
+              <ambientLight intensity={0.3} />
+              <pointLight position={[10, 10, 10]} intensity={1} />
+              <Stars radius={300} depth={50} count={5000} factor={4} fade speed={1} />
+              <Asteroid3D scrollProgress={scrollProgress} />
+              <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.5} />
+            </Canvas>
+          </div>
         </div>
       </div>
       
