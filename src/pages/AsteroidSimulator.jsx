@@ -75,18 +75,23 @@ const AsteroidSimulator = () => {
   useEffect(() => {
     if (storeAsteroid) {
       setSelectedAsteroid(storeAsteroid);
-      setDiameter(storeAsteroid.diameter);
-      setVelocity(storeAsteroid.velocity);
-      setMass(storeAsteroid.mass);
+      // Update all parameters from the selected asteroid
+      setDiameter(storeAsteroid.diameter || 1.0);
+      setVelocity(storeAsteroid.velocity || 20);
+      setMass(storeAsteroid.mass || 1.5e12);
+      // Reset simulation state
+      setCurrentPosition({ x: 6, y: 0, z: 0 });
+      setSimulationTime(0);
+      setShowImpact(false);
     }
   }, [storeAsteroid]);
 
   // Update when asteroid selected from dropdown
   useEffect(() => {
     if (selectedAsteroid) {
-      setDiameter(selectedAsteroid.diameter);
-      setVelocity(selectedAsteroid.velocity);
-      setMass(selectedAsteroid.mass);
+      setDiameter(selectedAsteroid.diameter || 1.0);
+      setVelocity(selectedAsteroid.velocity || 20);
+      setMass(selectedAsteroid.mass || 1.5e12);
     }
   }, [selectedAsteroid]);
 
@@ -399,7 +404,7 @@ const AsteroidSimulator = () => {
                     <Earth3D />
                     <Asteroid3D 
                       position={[currentPosition.x, currentPosition.y, currentPosition.z]} 
-                      size={Math.max(0.1, diameter * 0.2)}
+                      size={Math.max(0.15, Math.min(diameter * 0.3, 1.5))}
                       isDeflected={missionStatus === 'success'}
                     />
                     <OrbitPath 

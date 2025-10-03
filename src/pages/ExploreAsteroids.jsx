@@ -7,6 +7,39 @@ import Footer from '../components/Footer';
 import useAsteroidStore from '../store/asteroidStore';
 import { browseAsteroids, getFallbackAsteroids, extractAsteroidData } from '../utils/nasaApi';
 
+// Import asteroid images
+import asteroid1 from '../assets/asteroids/asteroid-1.jpg';
+import asteroid2 from '../assets/asteroids/asteroid-2.jpg';
+import asteroid3 from '../assets/asteroids/asteroid-3.jpg';
+import asteroid4 from '../assets/asteroids/asteroid-4.jpg';
+import asteroid5 from '../assets/asteroids/asteroid-5.jpg';
+import asteroid6 from '../assets/asteroids/asteroid-6.jpg';
+import asteroid7 from '../assets/asteroids/asteroid-7.jpg';
+import asteroid8 from '../assets/asteroids/asteroid-8.jpg';
+import asteroid9 from '../assets/asteroids/asteroid-9.jpg';
+import asteroid10 from '../assets/asteroids/asteroid-10.jpg';
+import asteroid11 from '../assets/asteroids/asteroid-11.jpg';
+import asteroid12 from '../assets/asteroids/asteroid-12.jpg';
+import asteroid13 from '../assets/asteroids/asteroid-13.jpg';
+import asteroid14 from '../assets/asteroids/asteroid-14.jpg';
+import asteroid15 from '../assets/asteroids/asteroid-15.jpg';
+import asteroid16 from '../assets/asteroids/asteroid-16.jpg';
+import asteroid17 from '../assets/asteroids/asteroid-17.jpg';
+import asteroid18 from '../assets/asteroids/asteroid-18.jpg';
+import asteroid19 from '../assets/asteroids/asteroid-19.jpg';
+import asteroid20 from '../assets/asteroids/asteroid-20.jpg';
+import asteroid21 from '../assets/asteroids/asteroid-21.jpg';
+import asteroid22 from '../assets/asteroids/asteroid-22.jpg';
+import asteroid23 from '../assets/asteroids/asteroid-23.jpg';
+import asteroid24 from '../assets/asteroids/asteroid-24.jpg';
+
+const asteroidImages = [
+  asteroid1, asteroid2, asteroid3, asteroid4, asteroid5, asteroid6,
+  asteroid7, asteroid8, asteroid9, asteroid10, asteroid11, asteroid12,
+  asteroid13, asteroid14, asteroid15, asteroid16, asteroid17, asteroid18,
+  asteroid19, asteroid20, asteroid21, asteroid22, asteroid23, asteroid24
+];
+
 const ExploreAsteroids = () => {
   const navigate = useNavigate();
   const { setSelectedAsteroid } = useAsteroidStore();
@@ -79,10 +112,11 @@ const ExploreAsteroids = () => {
     navigate('/simulator');
   };
 
-  const AsteroidCard = ({ asteroid }) => {
+  const AsteroidCard = ({ asteroid, index }) => {
     const diameter = asteroid.estimated_diameter?.kilometers?.estimated_diameter_max?.toFixed(2) || 'Unknown';
     const velocity = asteroid.close_approach_data?.[0]?.relative_velocity?.kilometers_per_second || 'N/A';
     const isHazardous = asteroid.is_potentially_hazardous_asteroid;
+    const asteroidImage = asteroidImages[index % asteroidImages.length];
 
     return (
       <motion.div
@@ -96,7 +130,11 @@ const ExploreAsteroids = () => {
       >
         {/* Asteroid Visual */}
         <div className="w-full h-40 bg-gradient-to-br from-muted to-background rounded-lg mb-4 flex items-center justify-center overflow-hidden relative">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-gray-500 to-gray-700 animate-float" />
+          <img 
+            src={asteroidImage} 
+            alt={asteroid.name}
+            className="w-full h-full object-cover transition-transform group-hover:scale-110"
+          />
           {isHazardous && (
             <div className="absolute top-2 right-2 bg-destructive text-white px-2 py-1 rounded-full text-xs font-bold">
               HAZARDOUS
@@ -331,8 +369,8 @@ const ExploreAsteroids = () => {
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             >
               <AnimatePresence>
-                {filteredAsteroids.map((asteroid) => (
-                  <AsteroidCard key={asteroid.id} asteroid={asteroid} />
+                {filteredAsteroids.map((asteroid, index) => (
+                  <AsteroidCard key={asteroid.id} asteroid={asteroid} index={index} />
                 ))}
               </AnimatePresence>
             </motion.div>
