@@ -42,7 +42,7 @@ const asteroidImages = [
 
 const ExploreAsteroids = () => {
   const navigate = useNavigate();
-  const { setSelectedAsteroid } = useAsteroidStore();
+  const setSelectedAsteroid = useAsteroidStore((state) => state.setSelectedAsteroid);
   
   const [asteroids, setAsteroids] = useState([]);
   const [filteredAsteroids, setFilteredAsteroids] = useState([]);
