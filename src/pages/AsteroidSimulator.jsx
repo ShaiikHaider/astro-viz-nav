@@ -64,6 +64,12 @@ const AsteroidSimulator = () => {
   const [deflectionMethod, setDeflectionMethod] = useState('kinetic');
   const [deltaV, setDeltaV] = useState(0);
   
+  // Visual size mapping: 10 km -> 1 world unit, clamped to [0.1, 2.0]
+  const mapDiameterToWorldSize = (d) => {
+    const size = (d || 0) / 10;
+    return Math.max(0.1, Math.min(size, 2.0));
+  };
+  
   // Results
   const [impactData, setImpactData] = useState(null);
   const [missionStatus, setMissionStatus] = useState('monitoring');
@@ -139,7 +145,7 @@ const AsteroidSimulator = () => {
     );
     
     // Collision threshold - game-like precision
-    const collisionThreshold = earthRadius + (diameter * 0.2);
+    const collisionThreshold = earthRadius + mapDiameterToWorldSize(diameter);
     
     if (distanceToCenter <= collisionThreshold && !isDeflected && !showImpact) {
       // Calculate precise impact point on Earth's surface
@@ -406,7 +412,7 @@ const AsteroidSimulator = () => {
                     <Asteroid3D 
                       key={`${selectedAsteroid?.id}-${diameter}`}
                       position={[currentPosition.x, currentPosition.y, currentPosition.z]} 
-                      size={Math.max(0.15, Math.min(diameter * 0.3, 1.5))}
+                      size={mapDiameterToWorldSize(diameter)}
                       isDeflected={missionStatus === 'success'}
                     />
                     <OrbitPath 
@@ -420,6 +426,7 @@ const AsteroidSimulator = () => {
                       <ImpactParticles 
                         position={impactPosition} 
                         active={showImpact} 
+                        scale={Math.max(0.8, mapDiameterToWorldSize(diameter) * 1.5)}
                       />
                     )}
                     

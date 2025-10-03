@@ -2,7 +2,7 @@ import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-const ImpactParticles = ({ position, active }) => {
+const ImpactParticles = ({ position, active, scale = 1 }) => {
   const fireballRef = useRef();
   const debrisRef = useRef();
   const shockwaveRef = useRef();
@@ -28,7 +28,7 @@ const ImpactParticles = ({ position, active }) => {
       // Random velocities (explosion pattern)
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.random() * Math.PI;
-      const speed = 0.08 + Math.random() * 0.25;
+      const speed = (0.08 + Math.random() * 0.25) * scale;
       
       vel.push({
         x: Math.sin(phi) * Math.cos(theta) * speed,
@@ -53,11 +53,11 @@ const ImpactParticles = ({ position, active }) => {
       }
       
       // Varying sizes
-      szs[i] = 0.05 + Math.random() * 0.15;
+      szs[i] = (0.05 + Math.random() * 0.15) * Math.max(0.8, Math.min(scale, 3));
     }
     
     return { positions: pos, velocities: vel, colors: cols, sizes: szs };
-  }, [position, active]);
+  }, [position, active, scale]);
 
   const { debrisPositions, debrisVelocities } = useMemo(() => {
     const pos = new Float32Array(debrisCount * 3);
@@ -70,7 +70,7 @@ const ImpactParticles = ({ position, active }) => {
       
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.random() * Math.PI;
-      const speed = 0.03 + Math.random() * 0.12;
+      const speed = (0.03 + Math.random() * 0.12) * scale;
       
       vel.push({
         x: Math.sin(phi) * Math.cos(theta) * speed,
@@ -80,7 +80,7 @@ const ImpactParticles = ({ position, active }) => {
     }
     
     return { debrisPositions: pos, debrisVelocities: vel };
-  }, [position, active]);
+  }, [position, active, scale]);
 
   const { smokePositions, smokeVelocities } = useMemo(() => {
     const pos = new Float32Array(smokeCount * 3);
@@ -93,7 +93,7 @@ const ImpactParticles = ({ position, active }) => {
       
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.random() * Math.PI;
-      const speed = 0.02 + Math.random() * 0.08;
+      const speed = (0.02 + Math.random() * 0.08) * scale;
       
       vel.push({
         x: Math.sin(phi) * Math.cos(theta) * speed,
@@ -103,7 +103,7 @@ const ImpactParticles = ({ position, active }) => {
     }
     
     return { smokePositions: pos, smokeVelocities: vel };
-  }, [position, active]);
+  }, [position, active, scale]);
 
   useFrame((state, delta) => {
     if (!active) return;
@@ -220,7 +220,7 @@ const ImpactParticles = ({ position, active }) => {
           />
         </bufferGeometry>
         <pointsMaterial
-          size={0.15}
+          size={0.15 * Math.max(0.8, scale)}
           vertexColors
           transparent
           opacity={1}
@@ -241,7 +241,7 @@ const ImpactParticles = ({ position, active }) => {
           />
         </bufferGeometry>
         <pointsMaterial
-          size={0.06}
+          size={0.06 * Math.max(0.8, scale)}
           color="#6b4423"
           transparent
           opacity={0.8}
@@ -260,7 +260,7 @@ const ImpactParticles = ({ position, active }) => {
           />
         </bufferGeometry>
         <pointsMaterial
-          size={0.2}
+          size={0.2 * Math.max(0.8, scale)}
           color="#333333"
           transparent
           opacity={0.6}
@@ -270,7 +270,7 @@ const ImpactParticles = ({ position, active }) => {
       
       {/* Shockwave ring */}
       <mesh ref={shockwaveRef} position={position}>
-        <ringGeometry args={[0.3, 0.5, 32]} />
+        <ringGeometry args={[0.3 * Math.max(0.8, scale), 0.5 * Math.max(0.8, scale), 32]} />
         <meshBasicMaterial
           color="#ff6600"
           transparent
@@ -282,7 +282,7 @@ const ImpactParticles = ({ position, active }) => {
       
       {/* Central flash - Enhanced */}
       <mesh position={position}>
-        <sphereGeometry args={[0.5, 16, 16]} />
+        <sphereGeometry args={[0.5 * Math.max(0.8, scale), 16, 16]} />
         <meshBasicMaterial
           color="#ffffff"
           transparent
@@ -293,7 +293,7 @@ const ImpactParticles = ({ position, active }) => {
       
       {/* Secondary flash ring */}
       <mesh position={position}>
-        <sphereGeometry args={[0.8, 16, 16]} />
+        <sphereGeometry args={[0.8 * Math.max(0.8, scale), 16, 16]} />
         <meshBasicMaterial
           color="#ff9900"
           transparent
