@@ -6,6 +6,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Stars, OrbitControls } from '@react-three/drei';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import spaceBackground from '../assets/space-background.jpg';
 
 // Simple 3D Asteroid component with scroll-based scaling
 const Asteroid3D = ({ scrollProgress }) => {
@@ -66,6 +67,20 @@ const Home = () => {
       <div ref={containerRef} className="relative" style={{ height: '400vh' }}>
         {/* Fixed viewport for scenes */}
         <div className="sticky top-0 h-screen w-full overflow-hidden">
+          
+          {/* Full Page Background Image with Shine Effect */}
+          <div 
+            className="absolute inset-0 z-0"
+            style={{
+              backgroundImage: `url(${spaceBackground})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+            }}
+          >
+            {/* Shiny overlay effect */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 animate-pulse" />
+          </div>
           
           {/* Scene 1 - Silent Beginning */}
           <motion.div
@@ -173,7 +188,7 @@ const Home = () => {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6 max-w-3xl"
             >
-              <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+              <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent animate-glow">
                 Humanity faces a global threat.
               </h1>
               <p className="text-xl md:text-2xl text-foreground">
@@ -225,8 +240,8 @@ const Home = () => {
             </motion.div>
           </motion.div>
 
-          {/* 3D Background with Asteroid */}
-          <div className="absolute inset-0 z-0">
+          {/* 3D Background with Asteroid - Overlay on top of image */}
+          <div className="absolute inset-0 z-[5] pointer-events-none">
             <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
               <ambientLight intensity={0.3} />
               <pointLight position={[10, 10, 10]} intensity={1} />
