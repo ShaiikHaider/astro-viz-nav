@@ -404,6 +404,7 @@ const AsteroidSimulator = () => {
                     
                     <Earth3D />
                     <Asteroid3D 
+                      key={`${selectedAsteroid?.id}-${diameter}`}
                       position={[currentPosition.x, currentPosition.y, currentPosition.z]} 
                       size={Math.max(0.15, Math.min(diameter * 0.3, 1.5))}
                       isDeflected={missionStatus === 'success'}
