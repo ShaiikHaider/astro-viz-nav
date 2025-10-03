@@ -33,10 +33,12 @@ const SceneController = ({
     
     timeRef.current += delta * 0.5;
     
+    const semiMajor = asteroidData?.semiMajorAxis ?? 1.5;
+    const ecc = asteroidData?.eccentricity ?? 0.2;
     const pos = calculateOrbitalPosition(
       timeRef.current,
-      asteroidData.semiMajorAxis,
-      asteroidData.eccentricity,
+      semiMajor,
+      ecc,
       0
     );
     
