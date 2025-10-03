@@ -48,8 +48,8 @@ const SceneController = ({
 
 const AsteroidSimulator = () => {
   const [asteroidList] = useState(getPreloadedAsteroids());
-  const storeAsteroid = useAsteroidStore(state => state.selectedAsteroid);
-  const [selectedAsteroid, setSelectedAsteroid] = useState(storeAsteroid || asteroidList[0]);
+  const initialFromStore = useAsteroidStore.getState().selectedAsteroid;
+  const [selectedAsteroid, setSelectedAsteroid] = useState(initialFromStore || asteroidList[0]);
   const [isPlaying, setIsPlaying] = useState(true);
   const [currentPosition, setCurrentPosition] = useState({ x: 6, y: 0, z: 0 });
   const [simulationTime, setSimulationTime] = useState(0);
@@ -71,20 +71,21 @@ const AsteroidSimulator = () => {
   const [impactLocation] = useState([20, -40]);
   const [impactPosition, setImpactPosition] = useState([2, 0, 0]);
 
-  // Sync with store asteroid from Explore page
+  // Sync with store asteroid from Explore page (safe, no hooks)
   useEffect(() => {
-    if (storeAsteroid) {
-      setSelectedAsteroid(storeAsteroid);
+    const s = useAsteroidStore.getState().selectedAsteroid;
+    if (s) {
+      setSelectedAsteroid(s);
       // Update all parameters from the selected asteroid
-      setDiameter(storeAsteroid.diameter || 1.0);
-      setVelocity(storeAsteroid.velocity || 20);
-      setMass(storeAsteroid.mass || 1.5e12);
+      setDiameter(s.diameter || 1.0);
+      setVelocity(s.velocity || 20);
+      setMass(s.mass || 1.5e12);
       // Reset simulation state
       setCurrentPosition({ x: 6, y: 0, z: 0 });
       setSimulationTime(0);
       setShowImpact(false);
     }
-  }, [storeAsteroid]);
+  }, []);
 
   // Update when asteroid selected from dropdown
   useEffect(() => {
