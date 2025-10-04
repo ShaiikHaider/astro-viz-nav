@@ -56,15 +56,6 @@ const AsteroidSimulator = () => {
   const [currentPosition, setCurrentPosition] = useState({ x: 6, y: 0, z: 0 });
   const [simulationTime, setSimulationTime] = useState(0);
   
-  // Map center based on selected asteroid
-  const computeAsteroidLocation = (a) => {
-    if (!a) return [20, -40];
-    const base = (parseInt(a.id || '0', 10) || 0) + Math.round((a.diameter || 1) * 100);
-    const lat = Math.sin(base) * 60;
-    const lng = Math.cos(base) * 180;
-    return [Number(lat.toFixed(2)), Number(lng.toFixed(2))];
-  };
-  
   // Simulation parameters
   const [diameter, setDiameter] = useState(selectedAsteroid?.diameter || 1.0);
   const [velocity, setVelocity] = useState(selectedAsteroid?.velocity || 20);
@@ -85,7 +76,7 @@ const AsteroidSimulator = () => {
   const [impactData, setImpactData] = useState(null);
   const [missionStatus, setMissionStatus] = useState('monitoring');
   const [showImpact, setShowImpact] = useState(false);
-  const [impactLocation, setImpactLocation] = useState(computeAsteroidLocation(selectedAsteroid));
+  const [impactLocation] = useState([20, -40]);
   const [impactPosition, setImpactPosition] = useState([2, 0, 0]);
 
   // Sync with store asteroid from Explore page (safe, no hooks)
@@ -112,11 +103,7 @@ const AsteroidSimulator = () => {
       setMass(selectedAsteroid.mass || 1.5e12);
     }
   }, [selectedAsteroid]);
-  
-  useEffect(() => {
-    setImpactLocation(computeAsteroidLocation(selectedAsteroid));
-  }, [selectedAsteroid]);
-  
+
   // Calculate impact continuously
   useEffect(() => {
     const effectiveVelocity = Math.max(0, velocity - deltaV);
@@ -479,7 +466,6 @@ const AsteroidSimulator = () => {
                 <h3 className="text-lg font-bold mb-4">Impact Zone Prediction</h3>
                 <div className="w-full h-full rounded-xl overflow-hidden">
                   <MapContainer
-                    key={`${impactLocation[0]}-${impactLocation[1]}`}
                     center={impactLocation}
                     zoom={5}
                     style={{ height: '100%', width: '100%' }}
