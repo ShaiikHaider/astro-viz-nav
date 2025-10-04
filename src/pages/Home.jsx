@@ -52,6 +52,10 @@ const Home = () => {
   const scene2Opacity = useTransform(scrollYProgress, [0.15, 0.35, 0.45], [0, 1, 0]);
   const scene3Opacity = useTransform(scrollYProgress, [0.4, 0.6, 0.7], [0, 1, 0]);
   const scene4Opacity = useTransform(scrollYProgress, [0.65, 0.85], [0, 1]);
+  
+  // Title animation based on scroll
+  const titleOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
+  const titleY = useTransform(scrollYProgress, [0, 0.15], [0, -50]);
 
   // Convert scroll progress to plain number for Three.js
   useEffect(() => {
@@ -83,11 +87,14 @@ const Home = () => {
           </div>
 
           {/* Top Title */}
-          <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 text-center px-4">
-            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent drop-shadow-lg">
+          <motion.div 
+            style={{ opacity: titleOpacity, y: titleY }}
+            className="absolute top-24 left-1/2 -translate-x-1/2 z-20 text-center px-4"
+          >
+            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-white drop-shadow-lg">
               ASTROVIZ - 3D Based Asteroid Simulator
             </h1>
-          </div>
+          </motion.div>
 
           {/* Swipe Down indicator */}
           <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
