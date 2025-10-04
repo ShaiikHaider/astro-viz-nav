@@ -83,15 +83,15 @@ const Home = () => {
           </div>
 
           {/* Top Title */}
-          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20 text-center">
-            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+          <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 text-center px-4">
+            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent drop-shadow-lg">
               ASTROVIZ - 3D Based Asteroid Simulator
             </h1>
           </div>
 
           {/* Swipe Down indicator */}
-          <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-            <div className="px-4 py-2 rounded-full bg-background/60 border border-border backdrop-blur-sm pulse flex items-center gap-2">
+          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+            <div className="px-4 py-2 rounded-full bg-background/60 border border-border backdrop-blur-sm animate-pulse flex items-center gap-2">
               <span className="text-sm md:text-base font-semibold">Swipe down</span>
               <ChevronDown className="w-5 h-5" />
             </div>
