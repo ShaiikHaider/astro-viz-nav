@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Telescope, Target, Rocket } from 'lucide-react';
+import { AlertTriangle, Telescope, Target, Rocket, ChevronDown } from 'lucide-react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Stars, OrbitControls } from '@react-three/drei';
 import Navbar from '../components/Navbar';
@@ -81,7 +81,22 @@ const Home = () => {
             {/* Shiny overlay effect */}
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 animate-pulse" />
           </div>
-          
+
+          {/* Top Title */}
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20 text-center">
+            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+              ASTROVIZ - 3D Based Asteroid Simulator
+            </h1>
+          </div>
+
+          {/* Swipe Down indicator */}
+          <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+            <div className="px-4 py-2 rounded-full bg-background/60 border border-border backdrop-blur-sm pulse flex items-center gap-2">
+              <span className="text-sm md:text-base font-semibold">Swipe down</span>
+              <ChevronDown className="w-5 h-5" />
+            </div>
+          </div>
+
           {/* Scene 1 - Silent Beginning */}
           <motion.div
             style={{ opacity: scene1Opacity }}
